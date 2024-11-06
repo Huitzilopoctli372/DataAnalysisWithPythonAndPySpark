@@ -10,25 +10,15 @@
 
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, split, explode, lower, regexp_extract
-
 spark = SparkSession.builder.getOrCreate()
 
 book = spark.read.text("../../data/gutenberg_books/1342-0.txt")
-
 lines = book.select(split(book.value, " ").alias("line"))
-
 words = lines.select(explode(col("line")).alias("word"))
-
 words_lower = words.select(lower(col("word")).alias("word_lower"))
-
-words_clean = words_lower.select(
-    regexp_extract(col("word_lower"), "[a-z]*", 0).alias("word")
-)
+words_clean = words_lower.select(regexp_extract(col("word_lower"), "[a-z]*", 0).alias("word"))
 
 words_nonull = words_clean.where(col("word") != "")
-
-
-
 
 
 
@@ -46,16 +36,18 @@ response = requests.get(url)
 with open("1342-0.txt", "wb") as f:
     f.write(response.content)
 
-# Initiate a spark session
+# Initiate a spark session and create a spark of object Sparksession type
 spark = SparkSession.builder.getOrCreate()
 
-# Read in data
+# Read data into a dataframe
 book = spark.read.csv("1342-0.txt", sep='\n', header=False).withColumnRenamed("_c0", "value")
 
+# Clean/Transform data
 lines = book.select(split(book.value, " ").alias("line"))
 words = lines.select(explode(col("line")).alias("word"))
 words_lower = words.select(lower(col("word")).alias("word_lower"))
 words_clean = words_lower.select(regexp_extract(col("word_lower"), "[a-z]*", 0).alias("word"))
-
 words_nonull = words_clean.where(col("word") != "")
+
+# Show
 words_nonull.show()
